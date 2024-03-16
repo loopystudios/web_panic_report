@@ -16,3 +16,7 @@ Currently, a form is declared in a html file, and the panic hook displays it and
 ## Unknowns
 
 it works fine on debug, but on release it's currently less readable, but there are a few solutions (DWARF, source maps, debug id), see https://blog.sentry.io/the-pain-of-debugging-webassembly/ and https://sentry.engineering/blog/the-case-for-debug-ids
+
+## How to run ?
+
+Currently, I'm testing that proof of concept with [cargo wasm runner](https://github.com/jakobhellermann/wasm-server-runner): `WASM_SERVER_RUNNER_CUSTOM_INDEX_HTML=examples/form.html cargo run --target wasm32-unknown-unknown --example custom_html`
