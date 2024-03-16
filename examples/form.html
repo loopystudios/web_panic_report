@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<body>
+    {{ NO_MODULE }}
+    <script type="module">
+        // {{ MODULE }}
+
+        async function run() {
+            await wasm_bindgen("/api/wasm.wasm").catch(error => {
+                if (!error.message.startsWith("Using exceptions for control flow, don't mind me. This isn't actually an error!")) {
+                    throw error;
+                }
+            });
+        }
+
+        run();
+    </script>
+
+    <div style="display: none;" id="panic_info_form_container">
+        <form action="/form/submit" method="GET">
+            <textarea rows="5" cols="60" name="text" readonly id="panic_info_form_text"></textarea>
+            <br />
+            <input type="submit" value="submit" />
+        </form>
+    </div>
+</body>
+
+</html>
