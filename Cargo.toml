@@ -14,3 +14,6 @@ web-sys = { version = "0.3.69", features = [
     'HtmlTextAreaElement',
     'HtmlButtonElement',
 ] }
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.42"
