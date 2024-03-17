@@ -20,10 +20,10 @@
   With `web_panic_report`, an HTML container with an id is replaced with the report form: <br />
   <div id="test-container" style="background-color: black; width: 400px; height: 400px;">
     <div
-      style="position: absolute; width: 400px; height: 400px;color: white;text-align: center;vertical-align: middle;align-content: center;">
+      style="position: absolute; width: 400px; height: 400px;color: white;text-align: center;display:grid;align-content: center;justify-content: center;">
       Canvas (or DOOM) goes here
       <br />
-      <button onclick="triggerPanic()">Trigger Panic</button>
+      <button onclick="triggerPanic()" style="width: auto;">Trigger Panic</button>
     </div>
     <canvas id="my_canvas" width="400px" height="400px" style="background: black" />
   </div>

@@ -1,0 +1,85 @@
+name: Web Demo Update
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release-web:
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: install wasm-bindgen
+        uses: jetli/wasm-bindgen-action@v0.2.0
+        with:
+          version: 'latest'
+
+      - name: build (wasm)
+        run: cargo build --example simple --release --target wasm32-unknown-unknown
+
+      - name: package wasm
+        run: |
+          mkdir public
+          wasm-bindgen --target web --out-dir public target/wasm32-unknown-unknown/release/examples/simple.wasm --no-typescript
+          cat << EOF > public/index.html
+            <html>
+            <title>web_panic_report Demo</title>
+            <meta content=no-cache http-equiv=Cache-control>
+            <meta content=-1 http-equiv=Expires>
+            <script>let wasmModule;</script>
+            <script type="module">
+              import initSync from "/web_panic_report/simple.js";
+              wasmModule = await initSync(`/web_panic_report/simple_bg.wasm`);
+            </script>
+            <link as=fetch crossorigin href=/web_panic_report/simple_bg.wasm rel=preload type=application/wasm>
+            <link crossorigin href=/web_panic_report/simple.js rel=modulepreload>
+            </head>
+            <body>
+              With `web_panic_report`, an HTML container with an id is replaced with the report form: <br />
+              <div id="test-container" style="background-color: black; width: 400px; height: 400px;">
+                <div
+                  style="position: absolute; width: 400px; height: 400px;color: white;text-align: center;display:grid;align-content: center;justify-content: center;">
+                  Canvas (or DOOM) goes here
+                  <br />
+                  <button onclick="triggerPanic()" style="width: auto;">Trigger Panic</button>
+                </div>
+                <canvas id="my_canvas" width="400px" height="400px" style="background: black" />
+              </div>
+              <script>
+                function triggerPanic() {
+                  if (wasmModule) {
+                    wasmModule.trigger_panic(); /* Our rust function! */
+                  } else {
+                    console.error("WebAssembly module not loaded yet.");
+                  }
+                }
+              </script>
+            </body>
+            </html>
+          EOF
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './public'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
