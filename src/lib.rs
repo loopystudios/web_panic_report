@@ -3,6 +3,11 @@ use wasm_bindgen::prelude::*;
 use web_sys::wasm_bindgen::JsCast;
 use web_sys::{Element, HtmlButtonElement, HtmlTextAreaElement};
 
+#[cfg(feature = "default-form")]
+mod default_form;
+#[cfg(feature = "default-form")]
+pub use default_form::set_default_hook_with;
+
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(js_namespace = console)]
@@ -17,11 +22,11 @@ extern "C" {
     fn stack(error: &Error) -> String;
 }
 
-/// The ID of the element in `form.html` which receives the stack trace
-const FORM_TEXTAREA_ID: &str = "panic_info_form_text";
+/// The ID of the text area which is loaded with the stack trace in the default form.
+pub const FORM_TEXTAREA_ID: &str = "panic_info_form_text";
 
-/// The ID of the element in `form.html` which receives the stack trace
-const FORM_SUBMIT_ID: &str = "panic_info_form_submit";
+/// The ID of the `Send Report` button element in the default form.
+pub const FORM_SUBMIT_ID: &str = "panic_info_form_submit";
 
 /// Information about the panic that occurred, potentially useful to report.
 ///
@@ -45,11 +50,23 @@ impl std::fmt::Display for WasmPanicInfo {
     }
 }
 
-/// Set the panic hook
-pub fn set_hook_with<F>(container_id: impl Into<String>, submit_callback: F)
-where
+/// Set the panic hook.
+///
+/// # Params
+/// `container_id`: The ID of the HTML element that will be unmounted in favor of the form.\
+/// `form_html`: The raw HTML that will replace the container.\
+/// `submit_callback`: The closure that will run when the user hits the send report button.
+///
+/// # Panics
+/// This will panic (ironically) if the panic occurs in a headless environment.
+pub fn set_hook_with<F>(
+    container_id: impl Into<String>,
+    form_html: impl Into<String>,
+    submit_callback: F,
+) where
     F: Fn(&WasmPanicInfo) + Send + Sync + 'static,
 {
+    let form_html = form_html.into();
     let container_id = container_id.into();
     let callback = Arc::new(submit_callback);
 
@@ -78,7 +95,7 @@ where
             });
 
         // Replace inner html with our report form
-        parent.set_inner_html(include_str!("form.html"));
+        parent.set_inner_html(&form_html);
         // Replace the stack trace
         let text_area: HtmlTextAreaElement = document
             .get_element_by_id(FORM_TEXTAREA_ID)
