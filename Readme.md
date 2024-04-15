@@ -4,7 +4,7 @@
 
 **A panic hook which replaces an HTML element with a bug report form.**
 
-[![Discord](https://img.shields.io/discord/913957940560531456.svg?label=VGX&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/zrjnQzdjCB)
+[![Discord](https://img.shields.io/discord/913957940560531456.svg?label=Loopy&logo=discord&logoColor=ffffff&color=ffffff&labelColor=000000)](https://discord.gg/zrjnQzdjCB)
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](#license)
 [![Build status](https://github.com/loopystudios/web_panic_report/workflows/CI/badge.svg)](https://github.com/loopystudios/web_panic_report/actions)
 [![dependency status](https://deps.rs/repo/github/loopystudios/web_panic_report/status.svg)](https://deps.rs/repo/github/loopystudios/web_panic_report)
