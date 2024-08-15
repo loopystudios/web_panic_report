@@ -19,10 +19,17 @@ fn main() {
     );
 
     // Set the panic hook at the beginning of your program
-    web_panic_report::set_hook_with("test-container", my_form, |panic_info| {
-        web_sys::window()
-            .unwrap()
-            .alert_with_message(&panic_info.display.to_string())
-            .unwrap();
-    });
+    web_panic_report::set_hook_with(
+        "test-container",
+        my_form,
+        // No-op on panic
+        |_| {},
+        // Submit button will cause a web browser alert
+        |panic_info| {
+            web_sys::window()
+                .unwrap()
+                .alert_with_message(&panic_info.display.to_string())
+                .unwrap();
+        },
+    );
 }
