@@ -72,6 +72,26 @@ You can also use a custom bug report form. See the [custom example](examples/cus
 
 - [`console_error_panic_hook`](https://github.com/rustwasm/console_error_panic_hook) - Only outputs stack trace to the console.
 
+## Minimum supported Rust Version (MSRV)
+
+This version of Web Panic Report has been verified to compile with **Rust 1.75** and later.
+
+Future versions of Web Panic Report might increase the Rust version requirement.
+It will not be treated as a breaking change and as such can even happen with small patch releases.
+
+<details>
+<summary>Click here if compiling fails.</summary>
+
+As time has passed, some of Web Panic Report's dependencies could have released versions with a higher Rust requirement.
+If you encounter a compilation issue due to a dependency and don't want to upgrade your Rust toolchain, then you could downgrade the dependency.
+
+```sh
+# Use the problematic dependency's name and version
+cargo update -p package_name --precise 0.1.1
+```
+
+</details>
+
 ## Community
 
 All Loopy projects and development happens in the [Loopy Discord](https://discord.gg/zrjnQzdjCB). The discord is open to the public.
