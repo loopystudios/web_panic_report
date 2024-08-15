@@ -15,5 +15,5 @@ pub fn set_default_hook_with<F>(container_id: impl Into<String>, submit_callback
 where
     F: Fn(&WasmPanicInfo) + Send + Sync + 'static,
 {
-    crate::set_hook_with(container_id, FORM_HTML, submit_callback)
+    crate::set_hook_with(container_id, FORM_HTML, |_| {}, submit_callback)
 }

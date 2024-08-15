@@ -1,7 +1,9 @@
-use std::sync::Arc;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
 use wasm_bindgen::prelude::*;
-use web_sys::wasm_bindgen::JsCast;
-use web_sys::{Element, HtmlButtonElement, HtmlTextAreaElement};
+use web_sys::{wasm_bindgen::JsCast, Element, HtmlButtonElement, HtmlTextAreaElement};
 
 #[cfg(feature = "default-form")]
 mod default_form;
@@ -30,7 +32,8 @@ pub const FORM_SUBMIT_ID: &str = "panic_info_form_submit";
 
 /// Information about the panic that occurred, potentially useful to report.
 ///
-/// Why not [`PanicInfo`](std::panic::PanicInfo)? `PanicInfo` is unable to be owned, doesn't implement `Clone`, and is `!Send`, making it unable to pass to a callback.
+/// Why not [`PanicInfo`](std::panic::PanicInfo)? `PanicInfo` is unable to be owned, doesn't
+/// implement `Clone`, and is `!Send`, making it unable to pass to a callback.
 #[derive(Debug)]
 pub struct WasmPanicInfo {
     /// The file that triggered the panic
@@ -55,20 +58,25 @@ impl std::fmt::Display for WasmPanicInfo {
 /// # Params
 /// `container_id`: The ID of the HTML element that will be unmounted in favor of the form.\
 /// `form_html`: The raw HTML that will replace the container.\
+/// `on_panic_callback`: A closure that is triggered on panic automatically.\
 /// `submit_callback`: The closure that will run when the user hits the send report button.
 ///
 /// # Panics
-/// This will panic (ironically) if the panic occurs in a headless environment.
-pub fn set_hook_with<F>(
+/// This will panic (ironically) if the panic is caught in a headless environment.
+pub fn set_hook_with<F1, F2>(
     container_id: impl Into<String>,
     form_html: impl Into<String>,
-    submit_callback: F,
+    on_panic_callback: F1,
+    submit_callback: F2,
 ) where
-    F: Fn(&WasmPanicInfo) + Send + Sync + 'static,
+    F1: Fn(&WasmPanicInfo) + Send + Sync + 'static,
+    F2: Fn(&WasmPanicInfo) + Send + Sync + 'static,
 {
     let form_html = form_html.into();
     let container_id = container_id.into();
-    let callback = Arc::new(submit_callback);
+    let already_hydrated: AtomicBool = AtomicBool::new(false);
+    let on_panic_callback = Arc::new(on_panic_callback);
+    let submit_callback = Arc::new(submit_callback);
 
     std::panic::set_hook(Box::new(move |panic_info| {
         // Collect stack trace
@@ -83,31 +91,14 @@ pub fn set_hook_with<F>(
             stack_trace.push_str("\n\n");
             stack_trace
         };
+        // Print error
         error(console_message.clone());
 
-        // Retrieve the parent container we will be replacing with the report form.
-        let window = web_sys::window().expect("global window does not exists");
-        let document = window.document().expect("expecting a document on window");
-        let parent: Element = document
-            .get_element_by_id(&container_id)
-            .unwrap_or_else(|| {
-                panic!("`web_panic_report`: element `{container_id}` does not exist in the DOM",)
-            });
+        if already_hydrated.swap(true, Ordering::Relaxed) {
+            // Error already hydrated to the form body
+            return;
+        }
 
-        // Replace inner html with our report form
-        parent.set_inner_html(&form_html);
-        // Replace the stack trace
-        let text_area: HtmlTextAreaElement = document
-            .get_element_by_id(FORM_TEXTAREA_ID)
-            .expect("form text id doesn't exist")
-            .unchecked_into();
-        text_area.set_value(&console_message);
-        // TODO: Add onclick handler to button
-        let submit_button: HtmlButtonElement = document
-            .get_element_by_id(FORM_SUBMIT_ID)
-            .expect("form submit id doesn't exist")
-            .unchecked_into();
-        // Add onclick handler to the button
         let wasm_panic_info = WasmPanicInfo {
             file: panic_info
                 .location()
@@ -125,8 +116,34 @@ pub fn set_hook_with<F>(
             display: panic_info.to_string(),
             stack: e.stack(),
         };
+        // Trigger callback on panic.
+        on_panic_callback(&wasm_panic_info);
+
+        // Retrieve the parent container we will be replacing with the report form.
+        let window = web_sys::window().expect("global window does not exists");
+        let document = window.document().expect("expecting a document on window");
+        let parent: Element = document
+            .get_element_by_id(&container_id)
+            .unwrap_or_else(|| {
+                panic!("`web_panic_report`: element `{container_id}` does not exist in the DOM",)
+            });
+        // Replace inner html with our report form
+        parent.set_inner_html(&form_html);
+
+        // Hydrate the stack trace
+        let text_area: HtmlTextAreaElement = document
+            .get_element_by_id(FORM_TEXTAREA_ID)
+            .expect("form text id doesn't exist")
+            .unchecked_into();
+        text_area.set_value(&console_message);
+
+        // Add onclick handler to the submit button
+        let submit_button: HtmlButtonElement = document
+            .get_element_by_id(FORM_SUBMIT_ID)
+            .expect("form submit id doesn't exist")
+            .unchecked_into();
         let closure: Closure<dyn Fn()> = Closure::new({
-            let callback = callback.clone();
+            let callback = submit_callback.clone();
             move || {
                 callback(&wasm_panic_info);
             }
