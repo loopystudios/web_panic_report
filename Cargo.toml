@@ -1,7 +1,7 @@
 [package]
 name = "web_panic_report"
 description = "A panic hook which replaces an HTML element with a bug report form."
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/loopystudios/web_panic_report"
@@ -19,7 +19,7 @@ web-sys = { version = "0.3", features = [
 ] }
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.42"
+wasm-bindgen-test = "0.3.43"
 
 [features]
 default = ["default-form"]
